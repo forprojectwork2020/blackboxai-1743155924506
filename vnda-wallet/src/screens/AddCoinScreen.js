@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { TextInput, Button, List } from 'react-native-paper';
 import { COLORS, SIZES } from '../constants';
 import Header from '../components/Header';
+import { useWallet } from '../context/WalletContext';
+import { getTokenInfo } from '../utils/tronWeb';
 
 const AddCoinScreen = ({ navigation }) => {
   const [contractAddress, setContractAddress] = useState('');
@@ -28,6 +30,8 @@ const AddCoinScreen = ({ navigation }) => {
     },
   ];
 
+  const { addToken } = useWallet();
+
   const handleSearch = async () => {
     if (!contractAddress.trim()) {
       setError('Please enter a contract address');
@@ -38,15 +42,11 @@ const AddCoinScreen = ({ navigation }) => {
       setLoading(true);
       setError('');
       
-      // TODO: Implement token info fetching using TronWeb
-      const mockTokenInfo = {
-        symbol: 'TEST',
-        name: 'Test Token',
-        decimals: 18,
-        totalSupply: '1000000000',
-      };
-      
-      setTokenInfo(mockTokenInfo);
+      const tokenInfo = await getTokenInfo(contractAddress.trim());
+      setTokenInfo({
+        ...tokenInfo,
+        contractAddress: contractAddress.trim()
+      });
     } catch (err) {
       setError('Failed to fetch token information');
       console.error(err);
@@ -58,7 +58,7 @@ const AddCoinScreen = ({ navigation }) => {
   const handleAddToken = async (token) => {
     try {
       setLoading(true);
-      // TODO: Implement token addition to wallet
+      await addToken(token.contractAddress);
       navigation.goBack();
     } catch (err) {
       setError('Failed to add token');
