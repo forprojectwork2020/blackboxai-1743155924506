@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, Text, StyleSheet, Share, ScrollView } from 'react-native';
-import { Button, Card } from 'react-native-paper';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Share, ScrollView, Clipboard } from 'react-native';
+import { Button, Card, Snackbar } from 'react-native-paper';
 import QRCode from 'react-native-qrcode-svg';
 import { useWallet } from '../context/WalletContext';
 import { COLORS, SIZES } from '../constants';
@@ -8,6 +8,7 @@ import Header from '../components/Header';
 
 const ReceiveScreen = () => {
   const { wallet } = useWallet();
+  const [visible, setVisible] = useState(false);
   const address = wallet?.address || '';
 
   const handleShare = async () => {
@@ -23,11 +24,13 @@ const ReceiveScreen = () => {
   const handleCopy = async () => {
     try {
       await Clipboard.setString(address);
-      // TODO: Show success toast
+      setVisible(true);
     } catch (error) {
       console.error('Error copying address:', error);
     }
   };
+
+  const onDismissSnackBar = () => setVisible(false);
 
   return (
     <View style={styles.container}>
@@ -84,6 +87,14 @@ const ReceiveScreen = () => {
           </Card.Content>
         </Card>
       </ScrollView>
+      <Snackbar
+        visible={visible}
+        onDismiss={onDismissSnackBar}
+        duration={2000}
+        style={styles.snackbar}
+      >
+        Address copied to clipboard
+      </Snackbar>
     </View>
   );
 };
@@ -151,6 +162,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.textSecondary,
     lineHeight: 20,
+  },
+  snackbar: {
+    backgroundColor: COLORS.primary,
   },
 });
 
