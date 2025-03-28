@@ -6,17 +6,34 @@ import { COLORS, SIZES } from '../constants';
 import Header from '../components/Header';
 
 const SendScreen = ({ navigation, route }) => {
-  const { wallet } = useWallet();
+  const { wallet, sendTransaction } = useWallet();
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const selectedToken = route.params?.token || { symbol: 'TRX', balance: '0' };
+  const selectedToken = route.params?.token || { symbol: 'TRX', balance: '0', contractAddress: null };
+
+  const validateAddress = (address) => {
+    if (!address) return false;
+    // TRX addresses start with T and are 34 characters long
+    return address.startsWith('T') && address.length === 34;
+  };
+
+  const validateAmount = (value) => {
+    if (!value) return false;
+    const numValue = parseFloat(value);
+    return !isNaN(numValue) && numValue > 0 && numValue <= parseFloat(selectedToken.balance);
+  };
 
   const handleSend = async () => {
-    if (!recipient || !amount) {
-      setError('Please fill in all fields');
+    if (!validateAddress(recipient)) {
+      setError('Invalid recipient address');
+      return;
+    }
+
+    if (!validateAmount(amount)) {
+      setError('Invalid amount');
       return;
     }
 
@@ -24,8 +41,11 @@ const SendScreen = ({ navigation, route }) => {
       setLoading(true);
       setError('');
       
-      // TODO: Implement send transaction using TronWeb
-      // const tx = await tronWeb.trx.sendTransaction(recipient, amount);
+      await sendTransaction(
+        recipient,
+        parseFloat(amount),
+        selectedToken.contractAddress // null for TRX, contract address for tokens
+      );
       
       navigation.navigate('Transactions');
     } catch (err) {
